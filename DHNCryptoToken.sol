@@ -153,7 +153,7 @@ contract StandardToken is ERC20, BasicToken {
         require(_value <= balances[msg.sender]);
 
         require(timelockDeadline[msg.sender] <= now);
-        require(timelockAmount[msg.sender] <= balanceOf[msg.sender].sub(_value));
+        require(timelockAmount[msg.sender] <= balances[msg.sender].sub(_value));
 
         // SafeMath.sub will throw if there is not enough balance.
         balances[msg.sender] = balances[msg.sender].sub(_value);
@@ -174,7 +174,7 @@ contract StandardToken is ERC20, BasicToken {
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
 
         require(timelockDeadline[_from] <= now);
-        require(timelockAmount[_from] <= balanceOf[_from].sub(_value));
+        require(timelockAmount[_from] <= balances[_from].sub(_value));
 
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
@@ -248,29 +248,6 @@ contract StandardToken is ERC20, BasicToken {
         Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
-
-    function freezeAccount(address target) onlyOwner public {
-        frozenAccount[target] = true;
-        FreezeAccount(target);
-    }
-
-    function unfreezeAccount(address target) onlyOwner public {
-        delete frozenAccount[target];
-        UnfreezeAccount(target);
-    }
-
-    function lockAccount(address target, uint deadline, uint amount) onlyOwner public {
-        require(now < deadline);
-        timelockDeadline[target] = deadline;
-        timelockAmount[target] = amount;
-        TimelockAccount(target, deadline, amount);
-    }
-
-    function unlockAccount(address target) onlyOwner public {
-        delete timelockDeadline[target];
-        delete timelockAmount[target];
-        UnlockAccount(target);
-    }
 }
 
 contract PausableToken is StandardToken, Pausable {
@@ -293,6 +270,29 @@ contract PausableToken is StandardToken, Pausable {
 
     function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
         return super.decreaseApproval(_spender, _subtractedValue);
+    }
+
+    function freezeAccount(address target) onlyOwner public {
+        frozenAccount[target] = true;
+        FreezeAccount(target);
+    }
+
+    function unfreezeAccount(address target) onlyOwner public {
+        delete frozenAccount[target];
+        UnfreezeAccount(target);
+    }
+
+    function lockAccount(address target, uint deadline, uint amount) onlyOwner public {
+        require(now < deadline);
+        timelockDeadline[target] = deadline;
+        timelockAmount[target] = amount;
+        TimelockAccount(target, deadline, amount);
+    }
+
+    function unlockAccount(address target) onlyOwner public {
+        delete timelockDeadline[target];
+        delete timelockAmount[target];
+        UnlockAccount(target);
     }
 }
 
